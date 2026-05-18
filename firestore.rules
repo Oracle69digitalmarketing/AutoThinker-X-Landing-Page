@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // Waitlist Entry Validation
+    function isValidWaitlistEntry(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 150 &&
+             (!('wtp' in data) || (data.wtp in ['$0 – I\'d only use free', '$1‑$5 per blueprint', '$6‑$10 per blueprint', '$11‑$15 per month (unlimited)', '$20+ per month'])) &&
+             (!('excitedFeature' in data) || (data.excitedFeature in ['Competitor analysis', 'Pitch deck', 'Financial model', 'MVP outline'])) &&
+             data.createdAt == request.time &&
+             data.keys().hasAll(['name', 'email', 'createdAt']) &&
+             data.keys().size() <= 5;
+    }
+
+    match /waitlist_entries/{entryId} {
+      // Allow creation for anyone (public waitlist)
+      allow create: if isValidWaitlistEntry(incoming()) && isValidId(entryId);
+      
+      // Deny reads/updates/deletes for public users
+      // Only admins (if we had them) or specific security logic would allow this.
+      // For now, it's write-only for the public.
+      allow read, update, delete: if false;
+    }
+  }
+}
