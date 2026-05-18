@@ -10,39 +10,6 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from './lib/firebase';
-
-enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
-
-interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId?: string | null;
-  }
-}
-
-function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
-    authInfo: {
-      userId: null, // Public signup
-    },
-    operationType,
-    path
-  }
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
-}
 
 export default function App() {
   const [formState, setFormState] = useState({
@@ -52,29 +19,19 @@ export default function App() {
     excitedFeature: ''
   });
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setStatus('loading');
-    setErrorMessage('');
-
-    const path = 'waitlist_entries';
-    try {
-      await addDoc(collection(db, path), {
-        ...formState,
-        createdAt: serverTimestamp()
-      });
-      setStatus('success');
-    } catch (error) {
-      console.error(error);
-      setStatus('error');
-      try {
-        handleFirestoreError(error, OperationType.WRITE, path);
-      } catch (e: any) {
-        setErrorMessage(e.message);
-      }
-    }
+    
+    // Replace the URL below with your actual Google Form link
+    const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform';
+    
+    // Attempt to open in new tab
+    window.open(GOOGLE_FORM_URL, '_blank');
+    
+    // Show success state on the landing page
+    setStatus('success');
   };
 
   return (
@@ -319,18 +276,23 @@ export default function App() {
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           {[
-            { name: "S. Chen", role: "SaaS Founder", text: "The competitor analysis used to take me days. Now I get a comprehensive matrix in minutes. It's a game-changer for my workflow." },
-            { name: "M. Thorne", role: "Product Lead", text: "Finally, a tool that understands the gap between an idea and a technical roadmap. The MVP outline is surprisingly detailed." },
-            { name: "E. Rossi", role: "Indie Hacker", text: "As a solo founder, I wear many hats. Having an AI that handles the financial modeling lets me focus on building." }
+            { 
+              attribution: "Founder, Lagos (early demo user)", 
+              text: "The competitor analysis alone saved me days of manual research. I could finally see where my idea fits." 
+            },
+            { 
+              attribution: "Solo founder, Nairobi", 
+              text: "Having a pitch deck and financial model generated together is a game changer for someone like me who isn't a finance person." 
+            },
+            { 
+              attribution: "Pre‑seed founder, Cape Town", 
+              text: "I used AutoThinker X to validate my idea before approaching an incubator. It gave me confidence and structure." 
+            }
           ].map((t, i) => (
             <div key={i} className="p-8 rounded-3xl bg-neutral-900/30 border border-neutral-800 backdrop-blur-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Sparkles className="w-12 h-12 text-orange-500" />
-              </div>
               <p className="text-neutral-300 italic mb-6 leading-relaxed">"{t.text}"</p>
               <div>
-                <p className="font-bold text-neutral-100">{t.name}</p>
-                <p className="text-xs text-orange-500 font-medium uppercase tracking-widest">{t.role}</p>
+                <p className="text-xs text-orange-500 font-medium uppercase tracking-widest">— {t.attribution}</p>
               </div>
             </div>
           ))}
