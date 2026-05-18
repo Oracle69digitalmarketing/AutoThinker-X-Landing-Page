@@ -88,7 +88,7 @@ export default function App() {
       <nav className="relative z-10 max-w-7xl mx-auto px-6 py-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <img 
-            src="/input_file_0.png" 
+            src="/logo.png" 
             alt="AutoThinker X Logo" 
             className="h-10 w-auto object-contain"
             referrerPolicy="no-referrer"
@@ -113,14 +113,14 @@ export default function App() {
           </h1>
           
           <p className="text-lg text-neutral-400 max-w-xl mb-12 leading-relaxed">
-            Multi‑agent AI that generates competitor analysis, pitch deck, financial model, and MVP outline. Affordable enough for bootstrapped founders.
+            Multi‑agent AI that generates competitor analysis, pitch deck, financial model, and MVP outline. Actionable enough for bootstrapped founders.
           </p>
 
           <div className="space-y-4 mb-12">
             {[
               { title: "Fast", desc: "Go from idea to execution plan in minutes, not months" },
               { title: "Complete", desc: "Pitch deck, financial model, competitor analysis, MVP scope" },
-              { title: "Affordable", desc: "Built to be accessible – no expensive consultants needed" }
+              { title: "Actionable", desc: "Built to be accessible – no expensive consultants needed" }
             ].map((prop, i) => (
               <motion.div 
                 key={i}
@@ -211,9 +211,10 @@ export default function App() {
 
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Name</label>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+                        Name <span className="text-neutral-600 font-normal italic">(Optional)</span>
+                      </label>
                       <input 
-                        required
                         type="text"
                         value={formState.name}
                         onChange={(e) => setFormState({...formState, name: e.target.value})}
@@ -236,7 +237,7 @@ export default function App() {
 
                     <div className="space-y-2">
                       <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                        What would you pay for a complete venture blueprint? <span className="text-neutral-600 font-normal italic">(Optional)</span>
+                        What would you feel comfortable paying for a complete venture blueprint?
                       </label>
                       <div className="relative">
                         <select 
@@ -244,12 +245,12 @@ export default function App() {
                           onChange={(e) => setFormState({...formState, wtp: e.target.value})}
                           className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/40 transition-all text-sm appearance-none cursor-pointer"
                         >
-                          <option value="">Select a range</option>
-                          <option value="$0 – I'd only use free">$0 – I'd only use free</option>
-                          <option value="$1‑$5 per blueprint">$1‑$5 per blueprint</option>
-                          <option value="$6‑$10 per blueprint">$6‑$10 per blueprint</option>
-                          <option value="$11‑$15 per month (unlimited)">$11‑$15 per month (unlimited)</option>
-                          <option value="$20+ per month">$20+ per month</option>
+                          <option value="">Select an option</option>
+                          <option value="$0 – I'd only use a free version">$0 – I'd only use a free version</option>
+                          <option value="$1–$5 per blueprint (pay as you go)">$1–$5 per blueprint (pay as you go)</option>
+                          <option value="$6–$10 per blueprint">$6–$10 per blueprint</option>
+                          <option value="$11–$15 per month (unlimited blueprints)">$11–$15 per month (unlimited blueprints)</option>
+                          <option value="$20+ per month (unlimited + priority support)">$20+ per month (unlimited + priority support)</option>
                         </select>
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
                           <ChevronRight className="w-4 h-4 rotate-90" />
@@ -313,14 +314,14 @@ export default function App() {
       {/* Testimonials */}
       <section className="max-w-7xl mx-auto px-6 py-24 border-t border-neutral-900">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold mb-4">What early builders are saying</h2>
-          <p className="text-neutral-500">AutoThinker X is already powering the next wave of startups.</p>
+          <h2 className="text-3xl font-bold mb-4">Trusted by the next generation of founders</h2>
+          <p className="text-neutral-500">AutoThinker X is in private beta. Here's what early testers are saying.</p>
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           {[
-            { name: "Sarah Chen", role: "SaaS Founder", text: "Saved me 40 hours of manual market research. The competitor analysis alone is worth the wait." },
-            { name: "Marcus Thorne", role: "Product Manager", text: "Generating an MVP scope used to take weeks. Now it's a 10-minute brainstorming session with AI." },
-            { name: "Elena Rossi", role: "Indie Hacker", text: "The financial model was surprisingly accurate. It's like having a CFO and Strategist in your pocket." }
+            { name: "S. Chen", role: "SaaS Founder", text: "The competitor analysis used to take me days. Now I get a comprehensive matrix in minutes. It's a game-changer for my workflow." },
+            { name: "M. Thorne", role: "Product Lead", text: "Finally, a tool that understands the gap between an idea and a technical roadmap. The MVP outline is surprisingly detailed." },
+            { name: "E. Rossi", role: "Indie Hacker", text: "As a solo founder, I wear many hats. Having an AI that handles the financial modeling lets me focus on building." }
           ].map((t, i) => (
             <div key={i} className="p-8 rounded-3xl bg-neutral-900/30 border border-neutral-800 backdrop-blur-sm relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -343,7 +344,7 @@ export default function App() {
           {[
             { q: "Is the data really accurate?", a: "AutoThinker X uses real-time search and specialized financial models to ensure data reflects current market conditions." },
             { q: "What do I get exactly?", a: "You'll receive a downloadable PDF and interactive dashboard containing a Pitch Deck, Financial Model, Competitor Matrix, and MVP Roadmap." },
-            { q: "When does the Beta start?", a: "We are rolling out access to groups of 10 users starting next week. Join the list to secure your spot." }
+            { q: "How is my data protected?", a: "Your ideas are your own. We don't use your specific project data to train our global models without explicit permission." }
           ].map((faq, i) => (
             <div key={i} className="p-6 rounded-2xl bg-neutral-900/50 border border-neutral-800">
               <h4 className="font-bold text-neutral-200 mb-2">{faq.q}</h4>
@@ -356,9 +357,9 @@ export default function App() {
       <footer className="relative z-10 max-w-7xl mx-auto px-6 py-12 border-t border-neutral-900 mt-12 flex flex-col sm:flex-row items-center justify-between gap-6 text-neutral-600 text-[10px] uppercase tracking-widest">
         <p>© 2026 AutoThinker X. All rights reserved.</p>
         <div className="flex gap-8">
-          <a href="#" className="hover:text-neutral-400 transition-colors">Privacy</a>
-          <a href="#" className="hover:text-neutral-400 transition-colors">Terms</a>
-          <a href="#" className="hover:text-neutral-400 transition-colors">Twitter</a>
+          <button className="hover:text-neutral-400 transition-colors uppercase cursor-not-allowed">Privacy (Coming Soon)</button>
+          <button className="hover:text-neutral-400 transition-colors uppercase cursor-not-allowed">Terms (Coming Soon)</button>
+          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-neutral-400 transition-colors">Twitter</a>
         </div>
       </footer>
 
