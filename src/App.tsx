@@ -10,6 +10,8 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react';
+import { db } from './lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function App() {
   const [formState, setFormState] = useState({
@@ -19,20 +21,57 @@ export default function App() {
     excitedFeature: ''
   });
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setStatus('loading');
     
-    // Replace the URL below with your actual Google Form link
-    const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform';
-    
-    // Attempt to open in new tab
-    window.open(GOOGLE_FORM_URL, '_blank');
-    
-    // Show success state on the landing page
-    setStatus('success');
+    try {
+      await addDoc(collection(db, 'waitlist_entries'), {
+        ...formState,
+        name: formState.name || 'Anonymous', // Ensure name is always a string for Firestore rules
+        createdAt: serverTimestamp(), // Match blueprint field name
+      });
+      setStatus('success');
+    } catch (error) {
+      console.error('Error adding document: ', error);
+      setStatus('error');
+    }
   };
+
+  const LegalModal = ({ title, content, isOpen, onClose }: { title: string, content: React.ReactNode, isOpen: boolean, onClose: () => void }) => (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6"
+          onClick={onClose}
+        >
+          <motion.div 
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="bg-neutral-900 border border-neutral-800 p-8 rounded-[2rem] max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">{title}</h2>
+              <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors">
+                <Target className="w-5 h-5 rotate-45" />
+              </button>
+            </div>
+            <div className="text-neutral-400 text-sm leading-relaxed space-y-4">
+              {content}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-orange-500/30">
@@ -41,6 +80,46 @@ export default function App() {
         <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-orange-600/10 rounded-full blur-[120px]" />
         <div className="absolute top-[20%] -right-[10%] w-[30%] h-[30%] bg-blue-600/10 rounded-full blur-[120px]" />
       </div>
+
+      <LegalModal 
+        title="Privacy Policy"
+        isOpen={showPrivacy}
+        onClose={() => setShowPrivacy(false)}
+        content={
+          <>
+            <p><strong>Last Updated: May 20, 2026</strong></p>
+            <p>At AutoThinker X, we take your privacy seriously. This policy explains how we handle your data.</p>
+            <h4 className="font-bold text-white mt-4">1. Information We Collect</h4>
+            <p>We only collect the information you voluntarily provide through our waitlist form: name, email address, and product preferences.</p>
+            <h4 className="font-bold text-white mt-4">2. How We Use Data</h4>
+            <p>Your information is used strictly to provide beta access updates, personalized product notifications, and to improve the AutoThinker X experience.</p>
+            <h4 className="font-bold text-white mt-4">3. Data Protection</h4>
+            <p>We do not sell, trade, or share your personal data with third parties for marketing purposes. All data is stored securely via Firebase (Google Cloud Infrastructure).</p>
+            <h4 className="font-bold text-white mt-4">4. Your Rights</h4>
+            <p>You can request to be removed from our waitlist or have your data deleted at any time by contacting us through our social media channels.</p>
+          </>
+        }
+      />
+
+      <LegalModal 
+        title="Terms of Service"
+        isOpen={showTerms}
+        onClose={() => setShowTerms(false)}
+        content={
+          <>
+            <p><strong>Last Updated: May 20, 2026</strong></p>
+            <p>By joining the AutoThinker X beta waitlist, you agree to the following terms:</p>
+            <h4 className="font-bold text-white mt-4">1. Beta Access</h4>
+            <p>AutoThinker X is currently in private beta. Access is granted at our discretion and the service is provided "as is" without warranties of any kind.</p>
+            <h4 className="font-bold text-white mt-4">2. Intellectual Property</h4>
+            <p>Your product ideas and business data remain your property. AutoThinker X does not claim ownership over any blueprints generated using our tool.</p>
+            <h4 className="font-bold text-white mt-4">3. User Conduct</h4>
+            <p>You agree not to use AutoThinker X for any unlawful purposes or to generate malicious content.</p>
+            <h4 className="font-bold text-white mt-4">4. Limitation of Liability</h4>
+            <p>We are not liable for any business decisions made based on AI-generated blueprints. The tool is designed to assist in strategy, not replace professional legal or financial advice.</p>
+          </>
+        }
+      />
 
       <nav className="relative z-10 max-w-7xl mx-auto px-6 py-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -61,7 +140,7 @@ export default function App() {
           transition={{ duration: 0.6 }}
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-xs font-medium text-orange-500 mb-6">
-            <Sparkles className="w-3 h-3" />
+            <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
             <span>AI-Powered Product Strategy</span>
           </div>
           
@@ -90,7 +169,7 @@ export default function App() {
                   <CheckCircle2 className="w-3 h-3 text-green-500" />
                 </div>
                 <div>
-                  <span className="font-bold text-neutral-200">✅ {prop.title}:</span>{" "}
+                  <span className="font-bold text-neutral-200">{prop.title}:</span>{" "}
                   <span className="text-neutral-400">{prop.desc}</span>
                 </div>
               </motion.div>
@@ -203,11 +282,11 @@ export default function App() {
                           className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/40 transition-all text-sm appearance-none cursor-pointer"
                         >
                           <option value="">Select an option</option>
-                          <option value="$0 – I'd only use a free version">$0 – I'd only use a free version</option>
-                          <option value="$1–$5 per blueprint (pay as you go)">$1–$5 per blueprint (pay as you go)</option>
-                          <option value="$6–$10 per blueprint">$6–$10 per blueprint</option>
-                          <option value="$11–$15 per month (unlimited blueprints)">$11–$15 per month (unlimited blueprints)</option>
-                          <option value="$20+ per month (unlimited + priority support)">$20+ per month (unlimited + priority support)</option>
+                          <option value="$0 – I'd only use free">$0 – I'd only use free</option>
+                          <option value="$1‑$5 per blueprint">$1‑$5 per blueprint</option>
+                          <option value="$6‑$10 per blueprint">$6‑$10 per blueprint</option>
+                          <option value="$11‑$15 per month (unlimited)">$11‑$15 per month (unlimited)</option>
+                          <option value="$20+ per month">$20+ per month</option>
                         </select>
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
                           <ChevronRight className="w-4 h-4 rotate-90" />
@@ -319,9 +398,10 @@ export default function App() {
       <footer className="relative z-10 max-w-7xl mx-auto px-6 py-12 border-t border-neutral-900 mt-12 flex flex-col sm:flex-row items-center justify-between gap-6 text-neutral-600 text-[10px] uppercase tracking-widest">
         <p>© 2026 AutoThinker X. All rights reserved.</p>
         <div className="flex gap-8">
-          <button className="hover:text-neutral-400 transition-colors uppercase cursor-not-allowed">Privacy (Coming Soon)</button>
-          <button className="hover:text-neutral-400 transition-colors uppercase cursor-not-allowed">Terms (Coming Soon)</button>
-          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-neutral-400 transition-colors">Twitter</a>
+          <button onClick={() => setShowPrivacy(true)} className="hover:text-neutral-400 transition-colors uppercase">Privacy Policy</button>
+          <button onClick={() => setShowTerms(true)} className="hover:text-neutral-400 transition-colors uppercase">Terms of Service</button>
+          <a href="https://x.com/sophiemabel69" target="_blank" rel="noopener noreferrer" className="hover:text-neutral-400 transition-colors">Twitter</a>
+          <a href="https://www.linkedin.com/in/oracle69digitalmarketing" target="_blank" rel="noopener noreferrer" className="hover:text-neutral-400 transition-colors">LinkedIn</a>
         </div>
       </footer>
 
