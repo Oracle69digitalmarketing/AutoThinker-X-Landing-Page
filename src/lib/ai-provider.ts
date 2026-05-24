@@ -3,22 +3,26 @@ import Groq from "groq-sdk";
 
 // Helper to get environment variables across different platforms
 const getEnv = (key: string) => {
+  // Try Vite's import.meta.env first
   if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
     return import.meta.env[key];
   }
-  return (globalThis as any).process?.env?.[key] || "";
+  // Fallback to global process.env (for SSR or certain production builds)
+  try {
+    return (globalThis as any).process?.env?.[key] || "";
+  } catch {
+    return "";
+  }
 };
 
 const GEMINI_KEY = getEnv('VITE_GEMINI_API_KEY');
 const GROQ_KEY = getEnv('VITE_GROQ_API_KEY');
 
-// Initialize Gemini (using the NEW @google/genai client)
-const ai = GEMINI_KEY ? new GoogleGenAI({ apiKey: GEMINI_KEY }) : null;
-
-// Initialize Groq
-const groq = GROQ_KEY ? new Groq({ apiKey: GROQ_KEY, dangerouslyAllowBrowser: true }) : null;
-
-export const hasValidKey = () => (GEMINI_KEY && GEMINI_KEY.length > 10) || (GROQ_KEY && GROQ_KEY.length > 10);
+export const hasValidKey = () => {
+  const hasGemini = !!GEMINI_KEY && GEMINI_KEY.length > 10;
+  const hasGroq = !!GROQ_KEY && GROQ_KEY.length > 10;
+  return hasGemini || hasGroq;
+};
 
 const SYSTEM_INSTRUCTION = `
   You are AutoThinker X, an expert AI product strategist. 
@@ -32,17 +36,15 @@ const SYSTEM_INSTRUCTION = `
   Return ONLY valid JSON. No markdown formatting.
 `;
 
-/**
- * Strategy: Try Groq first for ultra-fast response, fallback to Gemini 2.0 Flash
- */
 export const generateBlueprint = async (prompt: string) => {
   if (!hasValidKey()) {
-    throw new Error("No AI providers configured. Please set VITE_GEMINI_API_KEY or VITE_GROQ_API_KEY.");
+    throw new Error("API Keys are missing. Please set VITE_GEMINI_API_KEY or VITE_GROQ_API_KEY in your dashboard.");
   }
 
   // 1. Attempt Groq (Ultra-fast Llama 3)
-  if (groq) {
+  if (GROQ_KEY && GROQ_KEY.length > 10) {
     try {
+      const groq = new Groq({ apiKey: GROQ_KEY, dangerouslyAllowBrowser: true });
       const completion = await groq.chat.completions.create({
         messages: [
           { role: "system", content: SYSTEM_INSTRUCTION },
@@ -54,14 +56,19 @@ export const generateBlueprint = async (prompt: string) => {
 
       const content = completion.choices[0]?.message?.content;
       if (content) return JSON.parse(content);
-    } catch (e) {
-      console.warn("Groq failed, falling back to Gemini:", e);
+    } catch (e: any) {
+      console.warn("Groq failed:", e.message);
+      // If Groq is the only key and it fails, re-throw to be caught by UI
+      if (!(GEMINI_KEY && GEMINI_KEY.length > 10)) {
+        throw new Error(`Groq Error: ${e.message}`);
+      }
     }
   }
 
-  // 2. Fallback to Gemini 2.0 Flash (Reliable & Multi-modal capable)
-  if (ai) {
+  // 2. Fallback to Gemini 2.0 Flash
+  if (GEMINI_KEY && GEMINI_KEY.length > 10) {
     try {
+      const ai = new GoogleGenAI({ apiKey: GEMINI_KEY });
       const result = await ai.models.generateContent({
         model: "gemini-2.0-flash",
         contents: [{ role: "user", parts: [{ text: SYSTEM_INSTRUCTION + "\n\nUser Idea: " + prompt }] }]
@@ -71,10 +78,19 @@ export const generateBlueprint = async (prompt: string) => {
       const cleanText = text.replace(/```json|```/g, "").trim();
       const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
       if (jsonMatch) return JSON.parse(jsonMatch[0]);
-    } catch (e) {
-      console.error("Gemini also failed:", e);
+      
+      // Fallback for non-JSON responses
+      return {
+        competitorAnalysis: "Analysis generated but format was unexpected.",
+        pitchDeckKeyPoints: ["Focus on core value prop", "Define target audience", "Plan scalability"],
+        financialModel: "Revenue model pending details.",
+        mvpOutline: ["User registration", "Core feature demo", "Feedback loop"]
+      };
+    } catch (e: any) {
+      console.error("Gemini failed:", e.message);
+      throw new Error(`AI Error: ${e.message}`);
     }
   }
 
-  throw new Error("All AI providers failed to generate a response.");
+  throw new Error("All AI services are currently unavailable.");
 };
