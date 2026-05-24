@@ -11,8 +11,7 @@ import {
   Loader2,
   Shield
 } from 'lucide-react';
-import { db } from './lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { supabase } from './lib/supabase';
 import DemoSection from './components/DemoSection';
 import AdminDashboard from './components/AdminDashboard';
 
@@ -53,14 +52,35 @@ export default function App() {
     setStatus('loading');
     
     try {
-      await addDoc(collection(db, 'waitlist_entries'), {
-        ...formState,
-        name: formState.name || 'Anonymous',
-        createdAt: serverTimestamp(),
+      // 1. Save to Supabase (Free Tier)
+      const { error: supabaseError } = await supabase
+        .from('waitlist')
+        .insert([
+          { 
+            name: formState.name || 'Anonymous',
+            email: formState.email,
+            wtp: formState.wtp,
+            excited_feature: formState.excitedFeature,
+            user_type: formState.userType,
+            created_at: new Date().toISOString()
+          }
+        ]);
+
+      if (supabaseError) throw supabaseError;
+
+      // 2. Trigger Email Delivery via Vercel API Route (Free)
+      await fetch('/api/send-lead-magnet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formState.email,
+          name: formState.name
+        }),
       });
+
       setStatus('success');
     } catch (error) {
-      console.error('Error adding document: ', error);
+      console.error('Error in submission: ', error);
       setStatus('error');
     }
   };

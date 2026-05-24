@@ -1,35 +1,31 @@
-import { onDocumentCreated } from "firebase-functions/v2/firestore";
-import * as admin from "firebase-admin";
-import * as nodemailer from "nodemailer";
-import { defineString } from "firebase-functions/params";
+import nodemailer from 'nodemailer';
 
-admin.initializeApp();
+export default async function handler(req: any, res: any) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
 
-const smtpUser = defineString("SMTP_USER");
-const smtpPass = defineString("SMTP_PASS");
-const smtpHost = defineString("SMTP_HOST", { default: "smtp.gmail.com" });
+  const { email, name } = req.body;
 
-const transporter = nodemailer.createTransport({
-  host: smtpHost.value(),
-  port: 465,
-  secure: true,
-  auth: {
-    user: smtpUser.value(),
-    pass: smtpPass.value(),
-  },
-});
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
 
-export const sendLeadMagnetEmail = onDocumentCreated("waitlist_entries/{docId}", async (event) => {
-  const snapshot = event.data;
-  if (!snapshot) return;
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
 
-  const userData = snapshot.data();
-  const userEmail = userData.email;
-  const userName = userData.name || "Founder";
+  const userName = name || "Founder";
 
   const mailOptions = {
-    from: `"AutoThinker X" <${smtpUser.value()}>`,
-    to: userEmail,
+    from: `"AutoThinker X" <${process.env.SMTP_USER}>`,
+    to: email,
     subject: "Your 2026 AfCFTA Cross-Border Expansion Checklist",
     html: `
       <!DOCTYPE html>
@@ -125,8 +121,9 @@ export const sendLeadMagnetEmail = onDocumentCreated("waitlist_entries/{docId}",
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log(`Lead magnet email successfully sent to ${userEmail}`);
+    return res.status(200).json({ message: 'Email sent successfully' });
   } catch (error) {
-    console.error("Error sending lead magnet email:", error);
+    console.error('Error sending email:', error);
+    return res.status(500).json({ message: 'Error sending email' });
   }
-});
+}

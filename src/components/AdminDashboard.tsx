@@ -14,8 +14,7 @@ import {
   DollarSign,
   Star
 } from 'lucide-react';
-import { db } from '../lib/firebase';
-import { collection, query, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { supabase } from '../lib/supabase';
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -40,14 +39,21 @@ export default function AdminDashboard() {
   const fetchEntries = async () => {
     setIsLoading(true);
     try {
-      const q = query(collection(db, 'waitlist_entries'), orderBy('createdAt', 'desc'));
-      const querySnapshot = await getDocs(q);
-      const data = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt)
+      const { data, error: fetchError } = await supabase
+        .from('waitlist')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      const formattedData = (data || []).map(entry => ({
+        ...entry,
+        excitedFeature: entry.excited_feature,
+        userType: entry.user_type,
+        createdAt: new Date(entry.created_at)
       }));
-      setEntries(data);
+      
+      setEntries(formattedData);
     } catch (err) {
       console.error('Error fetching entries:', err);
       setError('Failed to load entries');
@@ -59,7 +65,12 @@ export default function AdminDashboard() {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this entry?')) return;
     try {
-      await deleteDoc(doc(db, 'waitlist_entries', id));
+      const { error: deleteError } = await supabase
+        .from('waitlist')
+        .delete()
+        .eq('id', id);
+
+      if (deleteError) throw deleteError;
       setEntries(entries.filter(e => e.id !== id));
     } catch (err) {
       console.error('Error deleting entry:', err);
