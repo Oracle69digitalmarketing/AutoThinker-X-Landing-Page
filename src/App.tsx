@@ -37,9 +37,10 @@ export default function App() {
     email: '',
     wtp: '',
     excitedFeature: '',
-    userType: 'individual'
+    userType: 'founder' as 'founder' | 'accelerator'
   });
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
 
@@ -49,7 +50,10 @@ export default function App() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!formState.email) return;
+
     setStatus('loading');
+    setErrorMessage('');
     
     try {
       // 1. Save to Supabase (Free Tier)
@@ -58,7 +62,7 @@ export default function App() {
         .insert([
           { 
             name: formState.name || 'Anonymous',
-            email: formState.email,
+            email: formState.email.trim().toLowerCase(),
             wtp: formState.wtp,
             excited_feature: formState.excitedFeature,
             user_type: formState.userType,
@@ -66,22 +70,33 @@ export default function App() {
           }
         ]);
 
-      if (supabaseError) throw supabaseError;
+      if (supabaseError) {
+        if (supabaseError.code === '23505') {
+          throw new Error('This email is already registered on our waitlist.');
+        }
+        throw supabaseError;
+      }
 
       // 2. Trigger Email Delivery via Vercel API Route (Free)
-      await fetch('/api/send-lead-magnet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formState.email,
-          name: formState.name
-        }),
-      });
+      try {
+        await fetch('/api/send-lead-magnet', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: formState.email,
+            name: formState.name
+          }),
+        });
+      } catch (emailErr) {
+        console.warn('Email trigger failed, but user was added to database:', emailErr);
+      }
 
       setStatus('success');
-    } catch (error) {
+      setFormState({ ...formState, email: '' });
+    } catch (error: any) {
       console.error('Error in submission: ', error);
       setStatus('error');
+      setErrorMessage(error.message || 'An unexpected error occurred. Please try again.');
     }
   };
 
@@ -273,9 +288,9 @@ export default function App() {
                   <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
                     <CheckCircle2 className="w-10 h-10" />
                   </div>
-                  <h2 className="text-2xl font-bold mb-4">You're on the list!</h2>
-                  <p className="text-neutral-400 mb-8">
-                    Thanks for joining the AutoThinker X beta. We'll email you as soon as your spot is ready.
+                  <h2 className="text-2xl font-bold mb-4">🚀 You are on the list!</h2>
+                  <p className="text-neutral-400 mb-8 text-sm">
+                    Check your inbox for your AfCFTA Cross-Border Expansion Checklist. We'll email you as soon as your spot is ready.
                   </p>
                   <button 
                     onClick={() => setStatus('idle')}
@@ -292,6 +307,32 @@ export default function App() {
                   </p>
 
                   <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* User Type Toggle */}
+                    <div className="flex gap-4 p-1 bg-neutral-950 border border-neutral-800 rounded-xl">
+                      <button
+                        type="button"
+                        onClick={() => setFormState({...formState, userType: 'founder'})}
+                        className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
+                          formState.userType === 'founder' 
+                            ? 'bg-neutral-800 text-white shadow-sm' 
+                            : 'text-neutral-500 hover:text-neutral-300'
+                        }`}
+                      >
+                        Individual Founder
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormState({...formState, userType: 'accelerator'})}
+                        className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
+                          formState.userType === 'accelerator' 
+                            ? 'bg-neutral-800 text-white shadow-sm' 
+                            : 'text-neutral-500 hover:text-neutral-300'
+                        }`}
+                      >
+                        Hub / Accelerator
+                      </button>
+                    </div>
+
                     <div className="space-y-2">
                       <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
                         Name <span className="text-neutral-600 font-normal italic">(Optional)</span>
@@ -312,46 +353,14 @@ export default function App() {
                         type="email"
                         value={formState.email}
                         onChange={(e) => setFormState({...formState, email: e.target.value})}
-                        placeholder="elon@mars.com"
+                        placeholder={formState.userType === 'accelerator' ? "Enter corporate email..." : "elon@mars.com"}
                         className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/40 transition-all text-sm"
                       />
                     </div>
 
-                    <div className="space-y-3">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500 block">I am joining as:</label>
-                      <div className="grid grid-cols-1 gap-3">
-                        <label className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${formState.userType === 'individual' ? 'bg-orange-500/10 border-orange-500/50' : 'bg-neutral-950 border-neutral-800 hover:border-neutral-700'}`}>
-                          <input 
-                            type="radio" 
-                            name="userType" 
-                            className="hidden" 
-                            checked={formState.userType === 'individual'}
-                            onChange={() => setFormState({...formState, userType: 'individual'})}
-                          />
-                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${formState.userType === 'individual' ? 'border-orange-500' : 'border-neutral-700'}`}>
-                            {formState.userType === 'individual' && <div className="w-2 h-2 rounded-full bg-orange-500" />}
-                          </div>
-                          <span className="text-sm text-neutral-300">Individual Founder</span>
-                        </label>
-                        <label className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${formState.userType === 'incubator' ? 'bg-orange-500/10 border-orange-500/50' : 'bg-neutral-950 border-neutral-800 hover:border-neutral-700'}`}>
-                          <input 
-                            type="radio" 
-                            name="userType" 
-                            className="hidden" 
-                            checked={formState.userType === 'incubator'}
-                            onChange={() => setFormState({...formState, userType: 'incubator'})}
-                          />
-                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${formState.userType === 'incubator' ? 'border-orange-500' : 'border-neutral-700'}`}>
-                            {formState.userType === 'incubator' && <div className="w-2 h-2 rounded-full bg-orange-500" />}
-                          </div>
-                          <span className="text-sm text-neutral-300">Incubator/Accelerator Hub</span>
-                        </label>
-                      </div>
-                    </div>
-
                     <div className="space-y-2">
                       <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                        What would you feel comfortable paying for a complete venture blueprint?
+                        Comfortable Price / Blueprint?
                       </label>
                       <div className="relative">
                         <select 
@@ -374,7 +383,7 @@ export default function App() {
 
                     <div className="space-y-2">
                       <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                        Which feature excites you most? <span className="text-neutral-600 font-normal italic">(Optional)</span>
+                        Feature Priority? <span className="text-neutral-600 font-normal italic">(Optional)</span>
                       </label>
                       <div className="relative">
                         <select 
@@ -395,10 +404,10 @@ export default function App() {
                     </div>
 
                     {status === 'error' && (
-                      <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs">
-                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                        <p className="flex-1 opacity-90 truncate">
-                          Error joining waitlist. Please try again later.
+                      <div className="flex items-start gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <p className="flex-1 opacity-90">
+                          {errorMessage}
                         </p>
                       </div>
                     )}
@@ -411,7 +420,7 @@ export default function App() {
                         <Loader2 className="w-5 h-5 animate-spin" />
                       ) : (
                         <>
-                          <span>Join the Beta – Free</span>
+                          <span>{status === 'loading' ? 'Joining...' : 'Join Waitlist – Free'}</span>
                           <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </>
                       )}
