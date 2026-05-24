@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useTransition, memo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
@@ -8,23 +8,123 @@ import {
   Layers, 
   Loader2, 
   ChevronRight,
-  RefreshCcw
+  RefreshCcw,
+  AlertCircle
 } from 'lucide-react';
-import { generateBlueprint } from '../lib/gemini';
+import { generateBlueprint, hasValidKey } from '../lib/gemini';
+
+// Memoize the Blueprint Result to prevent unnecessary re-renders when typing
+const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear: () => void }) => {
+  return (
+    <motion.div
+      key="result"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-neutral-900 border border-neutral-800 rounded-3xl p-8 lg:p-10 shadow-2xl overflow-hidden relative"
+    >
+      <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
+        <Sparkles className="w-32 h-32 text-orange-500" />
+      </div>
+
+      <div className="space-y-8">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+            <Search className="w-5 h-5 text-blue-500" />
+          </div>
+          <div>
+            <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">Competitor Analysis</h4>
+            <p className="text-sm text-neutral-400 leading-relaxed">{blueprint.competitorAnalysis}</p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+            <Presentation className="w-5 h-5 text-orange-500" />
+          </div>
+          <div>
+            <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">Pitch Deck Keys</h4>
+            <ul className="grid gap-2">
+              {blueprint.pitchDeckKeyPoints.map((point: string, i: number) => (
+                <li key={i} className="text-sm text-neutral-400 flex items-center gap-2">
+                  <div className="w-1 h-1 bg-orange-500 rounded-full" />
+                  {point}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+            <BarChart3 className="w-5 h-5 text-green-500" />
+          </div>
+          <div>
+            <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">Financial Model</h4>
+            <p className="text-sm text-neutral-400 leading-relaxed">{blueprint.financialModel}</p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+            <Layers className="w-5 h-5 text-purple-500" />
+          </div>
+          <div>
+            <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">MVP Roadmap</h4>
+            <ul className="grid gap-2">
+              {blueprint.mvpOutline.map((item: string, i: number) => (
+                <li key={i} className="text-sm text-neutral-400 flex items-center gap-2">
+                  <div className="w-1 h-1 bg-purple-500 rounded-full" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button
+        onClick={onClear}
+        className="mt-10 w-full py-3 border border-neutral-800 rounded-xl text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-white hover:bg-white/5 transition-all"
+      >
+        Clear and Start Over
+      </button>
+    </motion.div>
+  );
+});
 
 export default function DemoSection() {
   const [input, setInput] = useState('');
+  const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
   const [blueprint, setBlueprint] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
     
     setIsLoading(true);
-    const result = await generateBlueprint(input);
-    setBlueprint(result);
-    setIsLoading(false);
+    setError(null);
+    
+    try {
+      const result = await generateBlueprint(input);
+      // Use startTransition for the state update that triggers the heavy re-render of results
+      startTransition(() => {
+        setBlueprint(result);
+        if (result.error && !hasValidKey()) {
+          setError("API Key missing or invalid. Please check your configuration.");
+        }
+      });
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClear = () => {
+    setBlueprint(null);
+    setError(null);
   };
 
   return (
@@ -50,6 +150,13 @@ export default function DemoSection() {
                 <span className="text-[10px] text-neutral-600 uppercase tracking-widest font-bold">Press Generate</span>
               </div>
             </div>
+
+            {error && (
+              <div className="flex items-center gap-2 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <p>{error}</p>
+              </div>
+            )}
 
             <button
               disabled={isLoading || !input.trim()}
@@ -94,79 +201,7 @@ export default function DemoSection() {
                 </p>
               </motion.div>
             ) : blueprint ? (
-              <motion.div
-                key="result"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-neutral-900 border border-neutral-800 rounded-3xl p-8 lg:p-10 shadow-2xl overflow-hidden relative"
-              >
-                <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
-                  <Sparkles className="w-32 h-32 text-orange-500" />
-                </div>
-
-                <div className="space-y-8">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                      <Search className="w-5 h-5 text-blue-500" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">Competitor Analysis</h4>
-                      <p className="text-sm text-neutral-400 leading-relaxed">{blueprint.competitorAnalysis}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-                      <Presentation className="w-5 h-5 text-orange-500" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">Pitch Deck Keys</h4>
-                      <ul className="grid gap-2">
-                        {blueprint.pitchDeckKeyPoints.map((point: string, i: number) => (
-                          <li key={i} className="text-sm text-neutral-400 flex items-center gap-2">
-                            <div className="w-1 h-1 bg-orange-500 rounded-full" />
-                            {point}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                      <BarChart3 className="w-5 h-5 text-green-500" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">Financial Model</h4>
-                      <p className="text-sm text-neutral-400 leading-relaxed">{blueprint.financialModel}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                      <Layers className="w-5 h-5 text-purple-500" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">MVP Roadmap</h4>
-                      <ul className="grid gap-2">
-                        {blueprint.mvpOutline.map((item: string, i: number) => (
-                          <li key={i} className="text-sm text-neutral-400 flex items-center gap-2">
-                            <div className="w-1 h-1 bg-purple-500 rounded-full" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setBlueprint(null)}
-                  className="mt-10 w-full py-3 border border-neutral-800 rounded-xl text-xs font-bold uppercase tracking-widest text-neutral-500 hover:text-white hover:bg-white/5 transition-all"
-                >
-                  Clear and Start Over
-                </button>
-              </motion.div>
+              <BlueprintResult blueprint={blueprint} onClear={handleClear} />
             ) : (
               <motion.div
                 key="empty"

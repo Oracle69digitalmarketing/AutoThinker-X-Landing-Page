@@ -1,9 +1,31 @@
 import { GoogleGenAI } from "@google/genai";
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || (process.env as any).GEMINI_API_KEY || "";
-const ai = new GoogleGenAI({ apiKey });
+// Support both Vite-style and process.env style for different hosting environments
+const getApiKey = () => {
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) {
+    return import.meta.env.VITE_GEMINI_API_KEY;
+  }
+  return (globalThis as any).process?.env?.GEMINI_API_KEY || 
+         (globalThis as any).process?.env?.VITE_GEMINI_API_KEY || "";
+};
+
+const apiKey = getApiKey();
+
+export const hasValidKey = () => apiKey && apiKey.length > 10;
 
 export const generateBlueprint = async (prompt: string) => {
+  if (!hasValidKey()) {
+    return {
+      error: "Missing API Key",
+      competitorAnalysis: "Please set VITE_GEMINI_API_KEY in your environment variables.",
+      pitchDeckKeyPoints: ["API Key is required to generate this."],
+      financialModel: "Configuration required.",
+      mvpOutline: ["Check your .env file."]
+    };
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+
   const systemInstruction = `
     You are AutoThinker X, an expert AI product strategist. 
     Based on the user's business idea, generate a concise "Venture Blueprint".
@@ -13,7 +35,7 @@ export const generateBlueprint = async (prompt: string) => {
     - financialModel: A high-level 12-month revenue projection summary.
     - mvpOutline: 3-4 core features for an MVP.
     
-    Keep it professional, actionable, and concise.
+    Return ONLY valid JSON. No markdown formatting.
   `;
 
   try {
@@ -24,19 +46,22 @@ export const generateBlueprint = async (prompt: string) => {
 
     const text = result.text;
     
-    // Attempt to parse JSON from the response
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    // Attempt to parse JSON from the response, handling potential markdown blocks
+    const cleanText = text.replace(/```json|```/g, "").trim();
+    const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+    
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
     }
     throw new Error("Could not parse AI response as JSON");
-  } catch (e) {
+  } catch (e: any) {
     console.error("AI Response error:", e);
     return {
-      competitorAnalysis: "Error generating analysis. Please check your API key.",
-      pitchDeckKeyPoints: ["Error generating pitch deck points."],
-      financialModel: "Error generating financial model.",
-      mvpOutline: ["Error generating MVP outline."]
+      error: e.message || "Generation Failed",
+      competitorAnalysis: "The AI failed to generate a response. This might be due to safety filters or service availability.",
+      pitchDeckKeyPoints: ["Please try a different idea or try again later."],
+      financialModel: "Generation error.",
+      mvpOutline: ["Try again."]
     };
   }
 };
