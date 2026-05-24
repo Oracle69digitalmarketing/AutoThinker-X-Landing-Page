@@ -3,11 +3,11 @@ import { getFirestore } from 'firebase/firestore';
 
 // Configuration from firebase-applet-config.json
 const firebaseConfig = {
-  projectId: "gen-lang-client-0850327882",
+  projectId: "autothinker-x-landing-page",
   appId: "1:924305108190:web:bffa6c6d75f6baaa62664f",
   apiKey: "AIzaSyBgNTc3FPbszCVpo4UW__cQ2SPrS2N0NN4",
-  authDomain: "gen-lang-client-0850327882.firebaseapp.com",
-  storageBucket: "gen-lang-client-0850327882.firebasestorage.app",
+  authDomain: "autothinker-x-landing-page.firebaseapp.com",
+  storageBucket: "autothinker-x-landing-page.firebasestorage.app",
   messagingSenderId: "924305108190"
 };
 
