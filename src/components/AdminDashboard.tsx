@@ -37,6 +37,10 @@ export default function AdminDashboard() {
   };
 
   const fetchEntries = async () => {
+    if (!supabase) {
+      setError('Database connection not configured.');
+      return;
+    }
     setIsLoading(true);
     try {
       const { data, error: fetchError } = await supabase
@@ -63,6 +67,7 @@ export default function AdminDashboard() {
   };
 
   const handleDelete = async (id: string) => {
+    if (!supabase) return;
     if (!window.confirm('Are you sure you want to delete this entry?')) return;
     try {
       const { error: deleteError } = await supabase

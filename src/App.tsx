@@ -56,6 +56,10 @@ export default function App() {
     setErrorMessage('');
     
     try {
+      if (!supabase) {
+        throw new Error('Database connection is not configured. Please check your environment variables.');
+      }
+
       // 1. Save to Supabase (Free Tier)
       const { error: supabaseError } = await supabase
         .from('waitlist')
