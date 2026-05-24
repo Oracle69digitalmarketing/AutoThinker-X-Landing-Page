@@ -11,12 +11,26 @@ import {
   Loader2,
   Shield
 } from 'lucide-react';
-import { supabase } from './lib/supabase';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import DemoSection from './components/DemoSection';
 import AdminDashboard from './components/AdminDashboard';
 
 export default function App() {
   const [view, setView] = useState<'landing' | 'admin'>('landing');
+
+  // Runtime initializer for Supabase
+  const getSupabaseClient = (): SupabaseClient | null => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) return null;
+    try {
+      return createClient(supabaseUrl, supabaseAnonKey);
+    } catch (e) {
+      console.error('Supabase initialization error:', e);
+      return null;
+    }
+  };
 
   // Simple hash routing
   useEffect(() => {
@@ -55,11 +69,16 @@ export default function App() {
     setStatus('loading');
     setErrorMessage('');
     
-    try {
-      if (!supabase) {
-        throw new Error('Database connection is not configured. Please check your environment variables.');
-      }
+    // Initialize the client safely only when the user clicks the button
+    const supabase = getSupabaseClient();
 
+    if (!supabase) {
+      setStatus('error');
+      setErrorMessage('Configuration error: Connection tokens are not accessible.');
+      return;
+    }
+
+    try {
       // 1. Save to Supabase (Free Tier)
       const { error: supabaseError } = await supabase
         .from('waitlist')

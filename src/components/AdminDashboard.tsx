@@ -14,7 +14,7 @@ import {
   DollarSign,
   Star
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -25,6 +25,20 @@ export default function AdminDashboard() {
   const [error, setError] = useState('');
 
   const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin';
+
+  // Runtime initializer for Supabase
+  const getSupabaseClient = (): SupabaseClient | null => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) return null;
+    try {
+      return createClient(supabaseUrl, supabaseAnonKey);
+    } catch (e) {
+      console.error('Supabase initialization error:', e);
+      return null;
+    }
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +51,7 @@ export default function AdminDashboard() {
   };
 
   const fetchEntries = async () => {
+    const supabase = getSupabaseClient();
     if (!supabase) {
       setError('Database connection not configured.');
       return;
@@ -67,6 +82,7 @@ export default function AdminDashboard() {
   };
 
   const handleDelete = async (id: string) => {
+    const supabase = getSupabaseClient();
     if (!supabase) return;
     if (!window.confirm('Are you sure you want to delete this entry?')) return;
     try {
