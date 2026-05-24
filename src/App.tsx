@@ -37,7 +37,8 @@ export default function App() {
     name: '',
     email: '',
     wtp: '',
-    excitedFeature: ''
+    excitedFeature: '',
+    userType: 'individual'
   });
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -54,8 +55,8 @@ export default function App() {
     try {
       await addDoc(collection(db, 'waitlist_entries'), {
         ...formState,
-        name: formState.name || 'Anonymous', // Ensure name is always a string for Firestore rules
-        createdAt: serverTimestamp(), // Match blueprint field name
+        name: formState.name || 'Anonymous',
+        createdAt: serverTimestamp(),
       });
       setStatus('success');
     } catch (error) {
@@ -266,7 +267,9 @@ export default function App() {
               ) : (
                 <motion.div key="form">
                   <h2 className="text-2xl font-bold mb-2">Join Beta Waitlist</h2>
-                  <p className="text-neutral-400 mb-8 text-sm">No credit card. We'll email you when your spot is ready.</p>
+                  <p className="text-neutral-400 mb-8 text-sm leading-relaxed">
+                    Join the waitlist today and get our AI-generated <span className="text-orange-500 font-medium">'2026 AfCFTA Cross-Border Expansion Checklist'</span> sent instantly to your inbox.
+                  </p>
 
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-2">
@@ -292,6 +295,38 @@ export default function App() {
                         placeholder="elon@mars.com"
                         className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/40 transition-all text-sm"
                       />
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500 block">I am joining as:</label>
+                      <div className="grid grid-cols-1 gap-3">
+                        <label className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${formState.userType === 'individual' ? 'bg-orange-500/10 border-orange-500/50' : 'bg-neutral-950 border-neutral-800 hover:border-neutral-700'}`}>
+                          <input 
+                            type="radio" 
+                            name="userType" 
+                            className="hidden" 
+                            checked={formState.userType === 'individual'}
+                            onChange={() => setFormState({...formState, userType: 'individual'})}
+                          />
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${formState.userType === 'individual' ? 'border-orange-500' : 'border-neutral-700'}`}>
+                            {formState.userType === 'individual' && <div className="w-2 h-2 rounded-full bg-orange-500" />}
+                          </div>
+                          <span className="text-sm text-neutral-300">Individual Founder</span>
+                        </label>
+                        <label className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${formState.userType === 'incubator' ? 'bg-orange-500/10 border-orange-500/50' : 'bg-neutral-950 border-neutral-800 hover:border-neutral-700'}`}>
+                          <input 
+                            type="radio" 
+                            name="userType" 
+                            className="hidden" 
+                            checked={formState.userType === 'incubator'}
+                            onChange={() => setFormState({...formState, userType: 'incubator'})}
+                          />
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${formState.userType === 'incubator' ? 'border-orange-500' : 'border-neutral-700'}`}>
+                            {formState.userType === 'incubator' && <div className="w-2 h-2 rounded-full bg-orange-500" />}
+                          </div>
+                          <span className="text-sm text-neutral-300">Incubator/Accelerator Hub</span>
+                        </label>
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -362,6 +397,10 @@ export default function App() {
                       )}
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
                     </button>
+                    <p className="text-center text-[10px] text-neutral-500 mt-4 flex items-center justify-center gap-1.5 uppercase tracking-widest font-medium">
+                      <span className="flex h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse"></span>
+                      ⚡ Joining 100+ African tech founders and ecosystem builders.
+                    </p>
                   </form>
                 </motion.div>
               )}
