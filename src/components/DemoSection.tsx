@@ -11,7 +11,7 @@ import {
   RefreshCcw,
   AlertCircle
 } from 'lucide-react';
-import { generateBlueprint, hasValidKey } from '../lib/gemini';
+import { generateBlueprint, hasValidKey } from '../lib/ai-provider';
 
 // Memoize the Blueprint Result to prevent unnecessary re-renders when typing
 const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear: () => void }) => {
