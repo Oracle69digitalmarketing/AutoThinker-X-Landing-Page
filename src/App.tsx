@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Rocket, 
@@ -8,12 +8,31 @@ import {
   Sparkles, 
   CheckCircle2, 
   AlertCircle,
-  Loader2
+  Loader2,
+  Shield
 } from 'lucide-react';
 import { db } from './lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import DemoSection from './components/DemoSection';
+import AdminDashboard from './components/AdminDashboard';
 
 export default function App() {
+  const [view, setView] = useState<'landing' | 'admin'>('landing');
+
+  // Simple hash routing
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#admin') {
+        setView('admin');
+      } else {
+        setView('landing');
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    handleHashChange();
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   const [formState, setFormState] = useState({
     name: '',
     email: '',
@@ -23,6 +42,10 @@ export default function App() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+
+  if (view === 'admin') {
+    return <AdminDashboard />;
+  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -347,6 +370,8 @@ export default function App() {
         </motion.div>
       </main>
 
+      <DemoSection />
+
       {/* Testimonials */}
       <section className="max-w-7xl mx-auto px-6 py-24 border-t border-neutral-900">
         <div className="text-center mb-16">
@@ -398,6 +423,10 @@ export default function App() {
       <footer className="relative z-10 max-w-7xl mx-auto px-6 py-12 border-t border-neutral-900 mt-12 flex flex-col sm:flex-row items-center justify-between gap-6 text-neutral-600 text-[10px] uppercase tracking-widest">
         <p>© 2026 AutoThinker X. All rights reserved.</p>
         <div className="flex gap-8">
+          <a href="#admin" className="hover:text-neutral-400 transition-colors flex items-center gap-1 group">
+            <Shield className="w-3 h-3 group-hover:text-orange-500 transition-colors" />
+            <span>Admin Portal</span>
+          </a>
           <button onClick={() => setShowPrivacy(true)} className="hover:text-neutral-400 transition-colors uppercase">Privacy Policy</button>
           <button onClick={() => setShowTerms(true)} className="hover:text-neutral-400 transition-colors uppercase">Terms of Service</button>
           <a href="https://x.com/sophiemabel69" target="_blank" rel="noopener noreferrer" className="hover:text-neutral-400 transition-colors">Twitter</a>
