@@ -131,7 +131,7 @@ export default function DemoSection() {
   };
 
   return (
-    <section className="max-w-7xl mx-auto px-6 py-24 border-t border-neutral-900">
+    <section id="demo-section" className="max-w-7xl mx-auto px-6 py-24 border-t border-neutral-900">
       <div className="grid lg:grid-cols-2 gap-16 items-start">
         <div>
           <h2 className="text-3xl lg:text-5xl font-bold mb-6">

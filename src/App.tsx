@@ -62,6 +62,21 @@ export default function App() {
     return <AdminDashboard />;
   }
 
+  const handleBlueprintView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      const demoElement = document.getElementById('demo-section');
+      if (demoElement) {
+        demoElement.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } catch (error) {
+      console.error("Caught blueprint routing exception safely:", error);
+      window.location.hash = "#top";
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!formState.email) return;
@@ -315,12 +330,21 @@ export default function App() {
                   <p className="text-neutral-400 mb-8 text-sm">
                     Check your inbox for your AfCFTA Cross-Border Expansion Checklist. We'll email you as soon as your spot is ready.
                   </p>
-                  <button 
-                    onClick={() => setStatus('idle')}
-                    className="text-orange-500 font-medium hover:underline"
-                  >
-                    Back to top
-                  </button>
+                  <div className="flex flex-col gap-4">
+                    <button 
+                      onClick={handleBlueprintView}
+                      className="w-full py-4 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-500 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Sparkles className="w-5 h-5" />
+                      <span>Try Blueprint Engine</span>
+                    </button>
+                    <button 
+                      onClick={() => setStatus('idle')}
+                      className="text-neutral-500 text-sm font-medium hover:underline"
+                    >
+                      Back to top
+                    </button>
+                  </div>
                 </motion.div>
               ) : (
                 <motion.div key="form">
