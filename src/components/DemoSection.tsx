@@ -1,4 +1,4 @@
-import React, { useState, useTransition, memo } from 'react';
+import React, { useState, memo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
@@ -13,8 +13,10 @@ import {
 } from 'lucide-react';
 import { generateBlueprint, hasValidKey } from '../lib/ai-provider';
 
-// Memoize the Blueprint Result to prevent unnecessary re-renders when typing
+// Memoize the Blueprint Result to prevent unnecessary re-renders
 const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear: () => void }) => {
+  if (!blueprint) return null;
+  
   return (
     <motion.div
       key="result"
@@ -33,7 +35,7 @@ const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear:
           </div>
           <div>
             <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">Competitor Analysis</h4>
-            <p className="text-sm text-neutral-400 leading-relaxed">{blueprint.competitorAnalysis}</p>
+            <p className="text-sm text-neutral-400 leading-relaxed">{blueprint.competitorAnalysis || "No analysis generated."}</p>
           </div>
         </div>
 
@@ -44,7 +46,7 @@ const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear:
           <div>
             <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">Pitch Deck Keys</h4>
             <ul className="grid gap-2">
-              {blueprint.pitchDeckKeyPoints.map((point: string, i: number) => (
+              {(blueprint.pitchDeckKeyPoints || []).map((point: string, i: number) => (
                 <li key={i} className="text-sm text-neutral-400 flex items-center gap-2">
                   <div className="w-1 h-1 bg-orange-500 rounded-full" />
                   {point}
@@ -60,7 +62,7 @@ const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear:
           </div>
           <div>
             <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">Financial Model</h4>
-            <p className="text-sm text-neutral-400 leading-relaxed">{blueprint.financialModel}</p>
+            <p className="text-sm text-neutral-400 leading-relaxed">{blueprint.financialModel || "No model generated."}</p>
           </div>
         </div>
 
@@ -71,7 +73,7 @@ const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear:
           <div>
             <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">MVP Roadmap</h4>
             <ul className="grid gap-2">
-              {blueprint.mvpOutline.map((item: string, i: number) => (
+              {(blueprint.mvpOutline || []).map((item: string, i: number) => (
                 <li key={i} className="text-sm text-neutral-400 flex items-center gap-2">
                   <div className="w-1 h-1 bg-purple-500 rounded-full" />
                   {item}
@@ -94,7 +96,6 @@ const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear:
 
 export default function DemoSection() {
   const [input, setInput] = useState('');
-  const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
   const [blueprint, setBlueprint] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -103,20 +104,22 @@ export default function DemoSection() {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
     
+    console.log("DemoSection: Starting generation for:", input);
     setIsLoading(true);
     setError(null);
+    setBlueprint(null);
     
     try {
+      if (!hasValidKey()) {
+        throw new Error("API Keys are not configured in environment variables.");
+      }
+
       const result = await generateBlueprint(input);
-      // Use startTransition for the state update that triggers the heavy re-render of results
-      startTransition(() => {
-        setBlueprint(result);
-        if (result.error && !hasValidKey()) {
-          setError("API Key missing or invalid. Please check your configuration.");
-        }
-      });
-    } catch (err) {
-      setError("An unexpected error occurred. Please try again.");
+      console.log("DemoSection: Generation successful:", result);
+      setBlueprint(result);
+    } catch (err: any) {
+      console.error("DemoSection Error:", err);
+      setError(err.message || "An unexpected error occurred during generation.");
     } finally {
       setIsLoading(false);
     }
@@ -152,9 +155,12 @@ export default function DemoSection() {
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <p>{error}</p>
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-bold mb-1">Generation Failed</p>
+                  <p className="opacity-90">{error}</p>
+                </div>
               </div>
             )}
 
@@ -163,7 +169,10 @@ export default function DemoSection() {
               className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
             >
               {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>AI is thinking...</span>
+                </div>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5" />
@@ -175,8 +184,8 @@ export default function DemoSection() {
           </form>
 
           <div className="mt-8 flex items-center gap-4 text-xs text-neutral-500 font-medium">
-            <span className="flex items-center gap-1"><RefreshCcw className="w-3 h-3" /> No login required for demo</span>
-            <span className="flex items-center gap-1"><Sparkles className="w-3 h-3" /> Powered by Gemini 1.5 Flash</span>
+            <span className="flex items-center gap-1"><RefreshCcw className="w-3 h-3" /> No login required</span>
+            <span className="flex items-center gap-1"><Sparkles className="w-3 h-3" /> Dual AI Engine (Groq + Gemini)</span>
           </div>
         </div>
 
