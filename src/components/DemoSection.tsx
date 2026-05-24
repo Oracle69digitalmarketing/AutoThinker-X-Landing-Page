@@ -28,19 +28,48 @@ const safeList = (data: any): string[] => {
   return [];
 };
 
-// Helper to safely render text content (prevents React Error #31)
+// Helper to safely render text content with professional formatting
 const safeRender = (data: any): string => {
   if (data === null || data === undefined) return "";
+  
+  // Handle basic types
   if (typeof data === 'string' || typeof data === 'number' || typeof data === 'boolean') {
     return String(data);
   }
+
+  // Handle arrays
   if (Array.isArray(data)) {
     return data.map(item => typeof item === 'object' ? JSON.stringify(item) : String(item)).join(", ");
   }
+
+  // Handle objects with professional formatting
   if (typeof data === 'object') {
     try {
       return Object.entries(data)
-        .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
+        .map(([key, value]) => {
+          // Format the Key: camelCase -> Title Case
+          const formattedKey = key
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase())
+            .trim();
+
+          // Format the Value based on the key name
+          let formattedValue = value;
+          
+          if (typeof value === 'number') {
+            if (key.toLowerCase().includes('rate') || key.toLowerCase().includes('growth') || value < 1 && value > 0) {
+              // Format as percentage if it looks like a rate
+              formattedValue = `${(value * 100).toFixed(1)}%`;
+            } else if (key.toLowerCase().includes('revenue') || key.toLowerCase().includes('price') || key.toLowerCase().includes('projection')) {
+              // Format as currency if it looks like money
+              formattedValue = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value);
+            } else {
+              formattedValue = new Intl.NumberFormat('en-US').format(value);
+            }
+          }
+
+          return `${formattedKey}: ${formattedValue}`;
+        })
         .join(" | ");
     } catch (e) {
       return JSON.stringify(data);
