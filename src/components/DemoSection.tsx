@@ -17,7 +17,33 @@ import { generateBlueprint, hasValidKey } from '../lib/ai-provider';
 const safeList = (data: any): string[] => {
   if (Array.isArray(data)) return data;
   if (typeof data === 'string' && data.length > 0) return [data];
+  if (data && typeof data === 'object') {
+    // If it's an object, try to extract values or stringify
+    return Object.values(data).map(v => typeof v === 'object' ? JSON.stringify(v) : String(v));
+  }
   return [];
+};
+
+// Helper to safely render text content (prevents React Error #31)
+const safeRender = (data: any): React.ReactNode => {
+  if (data === null || data === undefined) return "";
+  if (typeof data === 'string' || typeof data === 'number' || typeof data === 'boolean') {
+    return String(data);
+  }
+  if (Array.isArray(data)) {
+    return data.map(item => typeof item === 'object' ? JSON.stringify(item) : String(item)).join(", ");
+  }
+  if (typeof data === 'object') {
+    // If it's a simple object, stringify its values or keys
+    try {
+      return Object.entries(data)
+        .map(([key, value]) => `${key}: ${typeof value === 'object' ? JSON.stringify(value) : value}`)
+        .join(" | ");
+    } catch (e) {
+      return JSON.stringify(data);
+    }
+  }
+  return String(data);
 };
 
 // Memoize the Blueprint Result to prevent unnecessary re-renders
@@ -42,7 +68,7 @@ const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear:
           </div>
           <div>
             <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">Competitor Analysis</h4>
-            <p className="text-sm text-neutral-400 leading-relaxed">{blueprint.competitorAnalysis || "No analysis generated."}</p>
+            <div className="text-sm text-neutral-400 leading-relaxed">{safeRender(blueprint.competitorAnalysis) || "No analysis generated."}</div>
           </div>
         </div>
 
@@ -56,7 +82,7 @@ const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear:
               {safeList(blueprint.pitchDeckKeyPoints).map((point: string, i: number) => (
                 <li key={i} className="text-sm text-neutral-400 flex items-center gap-2">
                   <div className="w-1 h-1 bg-orange-500 rounded-full" />
-                  {point}
+                  {safeRender(point)}
                 </li>
               ))}
             </ul>
@@ -69,7 +95,7 @@ const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear:
           </div>
           <div>
             <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">Financial Model</h4>
-            <p className="text-sm text-neutral-400 leading-relaxed">{blueprint.financialModel || "No model generated."}</p>
+            <div className="text-sm text-neutral-400 leading-relaxed">{safeRender(blueprint.financialModel) || "No model generated."}</div>
           </div>
         </div>
 
@@ -83,7 +109,7 @@ const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear:
               {safeList(blueprint.mvpOutline).map((item: string, i: number) => (
                 <li key={i} className="text-sm text-neutral-400 flex items-center gap-2">
                   <div className="w-1 h-1 bg-purple-500 rounded-full" />
-                  {item}
+                  {safeRender(item)}
                 </li>
               ))}
             </ul>
