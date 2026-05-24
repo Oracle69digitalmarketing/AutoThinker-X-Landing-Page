@@ -13,6 +13,13 @@ import {
 } from 'lucide-react';
 import { generateBlueprint, hasValidKey } from '../lib/ai-provider';
 
+// Helper to safely ensure we have an array for rendering
+const safeList = (data: any): string[] => {
+  if (Array.isArray(data)) return data;
+  if (typeof data === 'string' && data.length > 0) return [data];
+  return [];
+};
+
 // Memoize the Blueprint Result to prevent unnecessary re-renders
 const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear: () => void }) => {
   if (!blueprint) return null;
@@ -46,7 +53,7 @@ const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear:
           <div>
             <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">Pitch Deck Keys</h4>
             <ul className="grid gap-2">
-              {(blueprint.pitchDeckKeyPoints || []).map((point: string, i: number) => (
+              {safeList(blueprint.pitchDeckKeyPoints).map((point: string, i: number) => (
                 <li key={i} className="text-sm text-neutral-400 flex items-center gap-2">
                   <div className="w-1 h-1 bg-orange-500 rounded-full" />
                   {point}
@@ -73,7 +80,7 @@ const BlueprintResult = memo(({ blueprint, onClear }: { blueprint: any, onClear:
           <div>
             <h4 className="font-bold text-neutral-200 mb-1 uppercase text-xs tracking-widest">MVP Roadmap</h4>
             <ul className="grid gap-2">
-              {(blueprint.mvpOutline || []).map((item: string, i: number) => (
+              {safeList(blueprint.mvpOutline).map((item: string, i: number) => (
                 <li key={i} className="text-sm text-neutral-400 flex items-center gap-2">
                   <div className="w-1 h-1 bg-purple-500 rounded-full" />
                   {item}
@@ -104,23 +111,36 @@ export default function DemoSection() {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
     
-    console.log("DemoSection: Starting generation for:", input);
+    console.log("DemoSection: Starting generation for input:", input);
     setIsLoading(true);
     setError(null);
     setBlueprint(null);
     
     try {
-      if (!hasValidKey()) {
-        throw new Error("API Keys are not configured in environment variables.");
+      console.log("DemoSection: Checking API keys...");
+      const keyStatus = hasValidKey();
+      console.log("DemoSection: API Key Status:", keyStatus);
+
+      if (!keyStatus) {
+        throw new Error("API Keys are not configured. Please ensure VITE_GEMINI_API_KEY is set in Vercel settings.");
       }
 
+      console.log("DemoSection: Calling generateBlueprint...");
       const result = await generateBlueprint(input);
-      console.log("DemoSection: Generation successful:", result);
+      
+      if (!result || typeof result !== 'object') {
+        console.error("DemoSection: Invalid result received:", result);
+        throw new Error("The AI returned an invalid response format.");
+      }
+
+      console.log("DemoSection: Generation successful. Data structure:", Object.keys(result));
       setBlueprint(result);
     } catch (err: any) {
-      console.error("DemoSection Error:", err);
-      setError(err.message || "An unexpected error occurred during generation.");
+      console.error("DemoSection Critical Error:", err);
+      // Ensure we set a user-friendly error string
+      setError(err.message || "A critical error occurred. Please check the console for details.");
     } finally {
+      console.log("DemoSection: Finishing loading state.");
       setIsLoading(false);
     }
   };
