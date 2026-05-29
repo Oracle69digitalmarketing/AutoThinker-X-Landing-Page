@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import Groq from "groq-sdk";
 
 // Helper to get environment variables across different platforms
@@ -79,8 +79,8 @@ export const generateBlueprint = async (prompt: string) => {
   if (typeof GEMINI_KEY === 'string' && GEMINI_KEY.length > 10) {
     try {
       console.log("ai-provider: Initializing Gemini...");
-      const ai = new GoogleGenAI({ apiKey: GEMINI_KEY });
-      const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const genAI = new GoogleGenerativeAI(GEMINI_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
       
       console.log("ai-provider: Requesting content from Gemini...");
       const result = await model.generateContent(SYSTEM_INSTRUCTION + "\n\nUser Idea: " + prompt);

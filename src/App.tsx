@@ -14,6 +14,11 @@ import {
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import DemoSection from './components/DemoSection';
 import AdminDashboard from './components/AdminDashboard';
+import { Hero } from './components/Hero';
+import { ProblemSection } from './components/ProblemSection';
+import { ProcessFlow } from './components/ProcessFlow';
+import { OutputsSection } from './components/OutputsSection';
+import { ComparisonSection } from './components/ComparisonSection';
 
 export default function App() {
   const [view, setView] = useState<'landing' | 'admin'>('landing');
@@ -229,263 +234,191 @@ export default function App() {
         </div>
       </nav>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-12 pb-24 grid lg:grid-cols-2 gap-16 items-start">
-        {/* Left Column: Hero Content */}
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-900 border border-neutral-800 text-xs font-medium text-orange-500 mb-6">
-            <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
-            <span>AI-Powered Product Strategy</span>
-          </div>
-          
-          <h1 className="text-5xl lg:text-7xl font-bold leading-[1.1] tracking-tight mb-8">
-            AutoThinker X – From Idea to <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">Investable Blueprint</span> in Under 10 Minutes
-          </h1>
-          
-          <p className="text-lg text-neutral-400 max-w-xl mb-12 leading-relaxed">
-            Multi‑agent AI that generates competitor analysis, pitch deck, financial model, and MVP outline. Actionable enough for bootstrapped founders.
-          </p>
+      <div className="max-w-7xl mx-auto px-6">
+        <Hero onBetaClick={() => document.getElementById('waitlist-section')?.scrollIntoView({ behavior: 'smooth' })} />
+        
+        <ProblemSection />
+        
+        <ProcessFlow />
 
-          <div className="space-y-4 mb-12">
-            {[
-              { title: "Fast", desc: "Go from idea to execution plan in minutes, not months" },
-              { title: "Complete", desc: "Pitch deck, financial model, competitor analysis, MVP scope" },
-              { title: "Actionable", desc: "Built to be accessible – no expensive consultants needed" }
-            ].map((prop, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + i * 0.1 }}
-                className="flex items-start gap-3"
-              >
-                <div className="mt-1 w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle2 className="w-3 h-3 text-green-500" />
-                </div>
-                <div>
-                  <span className="font-bold text-neutral-200">{prop.title}:</span>{" "}
-                  <span className="text-neutral-400">{prop.desc}</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="p-6 rounded-2xl bg-orange-500/5 border border-orange-500/20 backdrop-blur-md">
-            <p className="text-orange-400 font-medium mb-1 truncate">Special Beta Offer</p>
-            <p className="text-neutral-300 text-sm leading-relaxed">
-              Be among the first 50 users. Free access during beta, plus <span className="text-white font-bold">40% lifetime discount</span> after launch – as a thank you for shaping the product.
+        {/* Waitlist/Beta Access Form Section */}
+        <section id="waitlist-section" className="py-24 border-t border-neutral-900 grid lg:grid-cols-2 gap-16 items-start">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl font-bold mb-6">Join the <span className="text-orange-500 text-glow">Founder Beta</span></h2>
+            <p className="text-lg text-neutral-400 mb-8 leading-relaxed">
+              We're opening access to a select group of founders and ecosystem builders. Secure your spot to shape the future of venture architecture.
             </p>
-          </div>
-
-          {/* How it Works Section */}
-          <div className="mt-16 pt-16 border-t border-neutral-900">
-            <h3 className="text-xl font-bold mb-8 flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-              </div>
-              How it Works
-            </h3>
-            <div className="space-y-8">
+            
+            <div className="space-y-6">
               {[
-                { step: "01", title: "Describe Idea", text: "Type a few sentences about what you want to build." },
-                { step: "02", title: "AI Research", text: "Agents crawl the web for competitors and market trends." },
-                { step: "03", title: "Blueprint Gen", text: "Get your deck, roadmap, and model delivered in minutes." }
+                { title: "Priority Support", desc: "Direct access to the founding team for venture strategy." },
+                { title: "Lifetime Discount", desc: "40% off all future premium features for beta members." },
+                { title: "Custom Architecture", desc: "Request specific agent modules tailored to your industry." }
               ].map((item, i) => (
-                <div key={i} className="flex gap-4">
-                  <span className="text-orange-500/40 font-mono text-sm font-bold pt-1">{item.step}</span>
+                <div key={i} className="flex gap-4 p-4 rounded-2xl bg-neutral-900/50 border border-neutral-800">
+                  <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-orange-500" />
+                  </div>
                   <div>
-                    <h4 className="font-semibold text-neutral-200">{item.title}</h4>
-                    <p className="text-sm text-neutral-500">{item.text}</p>
+                    <h4 className="font-bold text-neutral-200">{item.title}</h4>
+                    <p className="text-sm text-neutral-500">{item.desc}</p>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
 
-        {/* Right Column: Waitlist Form */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6 }}
-          className="relative sticky top-8"
-        >
-          <div className="absolute -inset-0.5 bg-gradient-to-br from-orange-500 to-blue-600 rounded-[2.1rem] blur opacity-20" />
-          <div className="relative bg-neutral-900 border border-neutral-800 p-8 lg:p-10 rounded-[2rem] shadow-2xl">
-            <AnimatePresence mode="wait">
-              {status === 'success' ? (
-                <motion.div 
-                  key="success"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="py-12 text-center"
-                >
-                  <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle2 className="w-10 h-10" />
-                  </div>
-                  <h2 className="text-2xl font-bold mb-4">🚀 You are on the list!</h2>
-                  <p className="text-neutral-400 mb-8 text-sm">
-                    Check your inbox for your AfCFTA Cross-Border Expansion Checklist. We'll email you as soon as your spot is ready.
-                  </p>
-                  <div className="flex flex-col gap-4">
-                    <button 
-                      onClick={handleBlueprintView}
-                      className="w-full py-4 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-500 transition-all flex items-center justify-center gap-2"
-                    >
-                      <Sparkles className="w-5 h-5" />
-                      <span>Try Blueprint Engine</span>
-                    </button>
-                    <button 
-                      onClick={() => setStatus('idle')}
-                      className="text-neutral-500 text-sm font-medium hover:underline"
-                    >
-                      Back to top
-                    </button>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div key="form">
-                  <h2 className="text-2xl font-bold mb-2">Join Beta Waitlist</h2>
-                  <p className="text-neutral-400 mb-8 text-sm leading-relaxed">
-                    Join the waitlist today and get our AI-generated <span className="text-orange-500 font-medium">'2026 AfCFTA Cross-Border Expansion Checklist'</span> sent instantly to your inbox.
-                  </p>
-
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* User Type Toggle */}
-                    <div className="flex gap-4 p-1 bg-neutral-950 border border-neutral-800 rounded-xl">
-                      <button
-                        type="button"
-                        onClick={() => setFormState({...formState, userType: 'founder'})}
-                        className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
-                          formState.userType === 'founder' 
-                            ? 'bg-neutral-800 text-white shadow-sm' 
-                            : 'text-neutral-500 hover:text-neutral-300'
-                        }`}
-                      >
-                        Individual Founder
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormState({...formState, userType: 'accelerator'})}
-                        className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
-                          formState.userType === 'accelerator' 
-                            ? 'bg-neutral-800 text-white shadow-sm' 
-                            : 'text-neutral-500 hover:text-neutral-300'
-                        }`}
-                      >
-                        Hub / Accelerator
-                      </button>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="relative"
+          >
+            <div className="absolute -inset-0.5 bg-gradient-to-br from-orange-500 to-blue-600 rounded-[2.1rem] blur opacity-20" />
+            <div className="relative bg-neutral-900 border border-neutral-800 p-8 lg:p-10 rounded-[2rem] shadow-2xl">
+              <AnimatePresence mode="wait">
+                {status === 'success' ? (
+                  <motion.div 
+                    key="success"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="py-12 text-center"
+                  >
+                    <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <CheckCircle2 className="w-10 h-10" />
                     </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                        Name <span className="text-neutral-600 font-normal italic">(Optional)</span>
-                      </label>
-                      <input 
-                        type="text"
-                        value={formState.name}
-                        onChange={(e) => setFormState({...formState, name: e.target.value})}
-                        placeholder="Elon Musk"
-                        className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/40 transition-all text-sm"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Email</label>
-                      <input 
-                        required
-                        type="email"
-                        value={formState.email}
-                        onChange={(e) => setFormState({...formState, email: e.target.value})}
-                        placeholder={formState.userType === 'accelerator' ? "Enter corporate email..." : "elon@mars.com"}
-                        className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/40 transition-all text-sm"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                        Comfortable Price / Blueprint?
-                      </label>
-                      <div className="relative">
-                        <select 
-                          value={formState.wtp}
-                          onChange={(e) => setFormState({...formState, wtp: e.target.value})}
-                          className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/40 transition-all text-sm appearance-none cursor-pointer"
-                        >
-                          <option value="">Select an option</option>
-                          <option value="$0 – I'd only use free">$0 – I'd only use free</option>
-                          <option value="$1‑$5 per blueprint">$1‑$5 per blueprint</option>
-                          <option value="$6‑$10 per blueprint">$6‑$10 per blueprint</option>
-                          <option value="$11‑$15 per month (unlimited)">$11‑$15 per month (unlimited)</option>
-                          <option value="$20+ per month">$20+ per month</option>
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
-                          <ChevronRight className="w-4 h-4 rotate-90" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                        Feature Priority? <span className="text-neutral-600 font-normal italic">(Optional)</span>
-                      </label>
-                      <div className="relative">
-                        <select 
-                          value={formState.excitedFeature}
-                          onChange={(e) => setFormState({...formState, excitedFeature: e.target.value})}
-                          className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/40 transition-all text-sm appearance-none cursor-pointer"
-                        >
-                          <option value="">Select feature</option>
-                          <option value="Competitor analysis">Competitor analysis</option>
-                          <option value="Pitch deck">Pitch deck</option>
-                          <option value="Financial model">Financial model</option>
-                          <option value="MVP outline">MVP outline</option>
-                        </select>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
-                          <ChevronRight className="w-4 h-4 rotate-90" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {status === 'error' && (
-                      <div className="flex items-start gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs">
-                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                        <p className="flex-1 opacity-90">
-                          {errorMessage}
-                        </p>
-                      </div>
-                    )}
-
-                    <button 
-                      disabled={status === 'loading'}
-                      className="group relative w-full bg-neutral-100 text-neutral-950 font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
-                    >
-                      {status === 'loading' ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <>
-                          <span>{status === 'loading' ? 'Joining...' : 'Join Waitlist – Free'}</span>
-                          <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                        </>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
-                    </button>
-                    <p className="text-center text-[10px] text-neutral-500 mt-4 flex items-center justify-center gap-1.5 uppercase tracking-widest font-medium">
-                      <span className="flex h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse"></span>
-                      ⚡ Joining 100+ African tech founders and ecosystem builders.
+                    <h2 className="text-2xl font-bold mb-4">🚀 Application Received!</h2>
+                    <p className="text-neutral-400 mb-8 text-sm">
+                      Check your inbox for your AfCFTA Cross-Border Expansion Checklist. We'll review your application for beta access shortly.
                     </p>
-                  </form>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-      </main>
+                    <div className="flex flex-col gap-4">
+                      <button 
+                        onClick={handleBlueprintView}
+                        className="w-full py-4 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-500 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Sparkles className="w-5 h-5" />
+                        <span>Try Demo Engine</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div key="form">
+                    <h2 className="text-2xl font-bold mb-2">Request Beta Access</h2>
+                    <p className="text-neutral-400 mb-8 text-sm leading-relaxed">
+                      Join 500+ founders. Get our AI-generated <span className="text-orange-500 font-medium">'2026 AfCFTA Expansion Checklist'</span> instantly.
+                    </p>
 
-      <DemoSection />
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      {/* User Type Toggle */}
+                      <div className="flex gap-4 p-1 bg-neutral-950 border border-neutral-800 rounded-xl">
+                        <button
+                          type="button"
+                          onClick={() => setFormState({...formState, userType: 'founder'})}
+                          className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
+                            formState.userType === 'founder' 
+                              ? 'bg-neutral-800 text-white shadow-sm' 
+                              : 'text-neutral-500 hover:text-neutral-300'
+                          }`}
+                        >
+                          Founder
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormState({...formState, userType: 'accelerator'})}
+                          className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
+                            formState.userType === 'accelerator' 
+                              ? 'bg-neutral-800 text-white shadow-sm' 
+                              : 'text-neutral-500 hover:text-neutral-300'
+                          }`}
+                        >
+                          Accelerator
+                        </button>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Name</label>
+                        <input 
+                          type="text"
+                          value={formState.name}
+                          onChange={(e) => setFormState({...formState, name: e.target.value})}
+                          placeholder="Your Name"
+                          className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/40 transition-all text-sm"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Work Email</label>
+                        <input 
+                          required
+                          type="email"
+                          value={formState.email}
+                          onChange={(e) => setFormState({...formState, email: e.target.value})}
+                          placeholder="you@company.com"
+                          className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/40 transition-all text-sm"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+                          Primary Interest?
+                        </label>
+                        <div className="relative">
+                          <select 
+                            value={formState.excitedFeature}
+                            onChange={(e) => setFormState({...formState, excitedFeature: e.target.value})}
+                            className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500/40 transition-all text-sm appearance-none cursor-pointer"
+                          >
+                            <option value="">Select interest</option>
+                            <option value="Competitor analysis">Competitor analysis</option>
+                            <option value="Architecture Design">Architecture Design</option>
+                            <option value="Financial Modeling">Financial Modeling</option>
+                            <option value="GTM Execution">GTM Execution</option>
+                          </select>
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+                            <ChevronRight className="w-4 h-4 rotate-90" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {status === 'error' && (
+                        <div className="flex items-start gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs">
+                          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                          <p className="flex-1 opacity-90">{errorMessage}</p>
+                        </div>
+                      )}
+
+                      <button 
+                        disabled={status === 'loading'}
+                        className="group relative w-full bg-neutral-100 text-neutral-950 font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+                      >
+                        {status === 'loading' ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <>
+                            <span>Request Beta Access</span>
+                            <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                          </>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
+                      </button>
+                    </form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        </section>
+
+        <OutputsSection />
+        
+        <ComparisonSection />
+
+        <DemoSection />
+      </div>
 
       {/* Testimonials */}
       <section className="max-w-7xl mx-auto px-6 py-24 border-t border-neutral-900">
